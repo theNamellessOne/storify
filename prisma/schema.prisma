@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  relationMode = "prisma"
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+}
+
+model StorifyCollection {
+  id                Int                        @id @default(autoincrement())
+  name              String
+  productCollection StorifyProductCollection[]
+}
+
+model StorifyProduct {
+  id Int @id @default(autoincrement())
+
+  title       String
+  status      String @default("Active")
+  mediaUrl    String
+  description String
+
+  optionList        StorifyOptionList[]
+  productVariants   StorifyProductVariant[]
+  productCollection StorifyProductCollection[]
+}
+
+model StorifyOptionList {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  product   StorifyProduct @relation(fields: [productId], references: [id])
+  productId Int
+
+  options StorifyOption[]
+
+  @@index([productId])
+}
+
+model StorifyOption {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  optionList   StorifyOptionList @relation(references: [id], fields: [optionListId])
+  optionListId Int
+
+  variant   StorifyProductVariant @relation(references: [id], fields: [variantId])
+  variantId Int
+
+  @@index([variantId])
+  @@index([optionListId])
+}
+
+model StorifyProductVariant {
+  id Int @id @default(autoincrement())
+
+  quantity  Int @default(0)
+  reserved  Int @default(0)
+  available Int @default(0)
+
+  basePrice      Decimal
+  internalPrice  Decimal @default(0)
+  compareAtPrice Decimal @default(0)
+
+  product   StorifyProduct @relation(references: [id], fields: [productId])
+  productId Int
+
+  options StorifyOption[]
+
+  @@index([productId])
+}
+
+model StorifyProductCollection {
+  product   StorifyProduct @relation(references: [id], fields: [productId])
+  productId Int
+
+  collection   StorifyCollection @relation(references: [id], fields: [collectionId])
+  collectionId Int
+
+  @@id([collectionId, productId])
+  @@index([productId])
+  @@index([collectionId])
+}
